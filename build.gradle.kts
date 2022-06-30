@@ -13,18 +13,28 @@ plugins {
     `maven-publish`
 }
 
-val oprsver = "4.31.1"
+val rlver = "1.8.25"
 
 group = "com.openosrs"
-version = "1.0.0"
+version = "1.0.1"
 
 repositories {
     mavenCentral()
     mavenLocal()
     maven {
-        url = uri("https://repo.runelite.net")
         url = uri("https://raw.githubusercontent.com/open-osrs/hosting/master")
-        url = uri("https://repo.openosrs.com/repository/maven")
+    }
+
+    exclusiveContent {
+        forRepository {
+            maven {
+                url = uri("https://repo.runelite.net")
+            }
+        }
+        filter {
+            includeModule("net.runelite", "runelite-parent")
+            includeModule("net.runelite", "cache")
+        }
     }
 }
 
@@ -34,7 +44,7 @@ dependencies {
 
     implementation(group = "com.google.guava", name = "guava", version = "30.1.1-jre")
     implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.8-1")
-    implementation("com.openosrs:cache:${oprsver}") {
+    implementation(group = "net.runelite", name = "cache", version = rlver) {
         isTransitive = false
     }
 }
