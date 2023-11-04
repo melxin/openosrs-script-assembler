@@ -13,10 +13,10 @@ plugins {
     `maven-publish`
 }
 
-val rlver = "1.8.25"
+val rlver = "1.10.15"
 
 group = "com.openosrs"
-version = "1.0.1"
+version = "1.0.2"
 
 repositories {
     mavenCentral()
@@ -43,7 +43,7 @@ dependencies {
     compileOnly(group = "org.projectlombok", name = "lombok", version = "1.18.20")
 
     implementation(group = "com.google.guava", name = "guava", version = "30.1.1-jre")
-    implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.8-1")
+    implementation(group = "org.antlr", name = "antlr4-runtime", version = "4.13.1")
     implementation(group = "net.runelite", name = "cache", version = rlver) {
         isTransitive = false
     }
