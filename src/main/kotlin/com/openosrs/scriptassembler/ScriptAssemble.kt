@@ -10,6 +10,7 @@ package com.openosrs.scriptassembler
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.tasks.*
+import org.gradle.api.file.RegularFileProperty
 
 @CacheableTask
 abstract class ScriptAssemble : DefaultTask() {
@@ -20,9 +21,17 @@ abstract class ScriptAssemble : DefaultTask() {
     @get:OutputDirectory
     abstract val output: DirectoryProperty
 
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val componentsFile: RegularFileProperty
+
+    init {
+        componentsFile.convention(project.layout.projectDirectory.file("../runelite-api/src/main/interfaces/interfaces.toml"))
+    }
+
     @TaskAction
     fun assembleScripts() {
-        val scriptAssembler: ScriptAssemblerTaskHandler = ScriptAssembler(input.get().asFileTree, output.get())
+        val scriptAssembler: ScriptAssemblerTaskHandler = ScriptAssembler(input.get().asFileTree, output.get(), componentsFile.get().asFile)
 
         scriptAssembler.assemble()
         scriptAssembler.buildIndex()

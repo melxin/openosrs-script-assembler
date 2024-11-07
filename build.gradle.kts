@@ -13,10 +13,10 @@ plugins {
     `maven-publish`
 }
 
-val rlver = "1.10.15"
+val rlver = "1.10.44"
 
 group = "com.openosrs"
-version = "1.0.2"
+version = "1.0.3"
 
 repositories {
     mavenCentral()
@@ -47,6 +47,9 @@ dependencies {
     implementation(group = "net.runelite", name = "cache", version = rlver) {
         isTransitive = false
     }
+
+    implementation(group = "org.tomlj", name = "tomlj", version = "1.1.0")
+    implementation(group = "com.squareup", name = "javapoet", version = "1.13.0")
 }
 
 gradlePlugin {
