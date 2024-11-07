@@ -34,6 +34,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import static java.lang.Integer.parseInt;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import net.runelite.cache.IndexType;
 import net.runelite.cache.definitions.ScriptDefinition;
@@ -42,8 +45,13 @@ import net.runelite.cache.script.RuneLiteInstructions;
 import net.runelite.cache.script.assembler.Assembler;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileTree;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.tomlj.Toml;
+import org.tomlj.TomlParseError;
+import org.tomlj.TomlParseResult;
+import org.tomlj.TomlTable;
 
 public class ScriptAssembler implements ScriptAssemblerTaskHandler
 {
@@ -51,11 +59,13 @@ public class ScriptAssembler implements ScriptAssemblerTaskHandler
 
 	private final FileTree input;
 	private final Directory output;
+	private final File componentsFile;
 
-	public ScriptAssembler(FileTree input, Directory output)
+	public ScriptAssembler(FileTree input, Directory output, File componentsFile)
 	{
 		this.input = input;
 		this.output = output;
+		this.componentsFile = componentsFile;
 	}
 
 	@Override
@@ -64,7 +74,7 @@ public class ScriptAssembler implements ScriptAssemblerTaskHandler
 		RuneLiteInstructions instructions = new RuneLiteInstructions();
 		instructions.init();
 
-		Assembler assembler = new Assembler(instructions);
+		Assembler assembler = new Assembler(instructions, buildComponentSymbols(componentsFile));
 		ScriptSaver saver = new ScriptSaver();
 
 		int count = 0;
@@ -151,5 +161,67 @@ public class ScriptAssembler implements ScriptAssemblerTaskHandler
 		}
 
 		log.lifecycle("Index file written");
+	}
+
+	private Map<String, Object> buildComponentSymbols(File file) throws RuntimeException
+	{
+		TomlParseResult result;
+		try
+		{
+			result = Toml.parse(file.toPath());
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException("unable to read component file " + file.getName(), e);
+		}
+
+		if (result.hasErrors())
+		{
+			for (TomlParseError err : result.errors())
+			{
+				log.error(err.toString());
+			}
+			throw new RuntimeException("unable to parse component file " + file.getName());
+		}
+
+		Map<String, Object> symbols = new HashMap<>();
+		for (var entry : result.entrySet())
+		{
+			var interfaceName = entry.getKey();
+			TomlTable tbl = (TomlTable) entry.getValue();
+
+			if (!tbl.contains("id"))
+			{
+				throw new RuntimeException("interface " + interfaceName + " has no id");
+			}
+
+			int interfaceId = (int) (long) tbl.getLong("id");
+			if (interfaceId < 0 || interfaceId > 0xffff)
+			{
+				throw new RuntimeException("interface id out of range for " + interfaceName);
+			}
+
+			for (var entry2 : tbl.entrySet())
+			{
+				var componentName = entry2.getKey();
+				if (componentName.equals("id"))
+				{
+					continue;
+				}
+
+				int id = (int) (long) entry2.getValue();
+				if (id < 0 || id > 0xffff)
+				{
+					throw new RuntimeException("component id out of range for " + componentName);
+				}
+
+				var fullName = interfaceName.toLowerCase(Locale.ENGLISH) + ":" + componentName.toLowerCase(Locale.ENGLISH);
+				int componentId = (interfaceId << 16) | id;
+
+				symbols.put(fullName, componentId);
+			}
+		}
+
+		return symbols;
 	}
 }
