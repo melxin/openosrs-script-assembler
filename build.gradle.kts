@@ -13,10 +13,10 @@ plugins {
     `maven-publish`
 }
 
-val rlver = "1.11.9-SNAPSHOT"
+val rlver = "1.11.9"
 
 group = "com.openosrs"
-version = "1.0.4"
+version = "1.0.5"
 
 repositories {
     mavenCentral()
